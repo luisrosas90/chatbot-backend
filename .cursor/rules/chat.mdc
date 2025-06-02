@@ -1,0 +1,145 @@
+---
+description: chat
+globs: 
+alwaysApply: false
+---
+Voy a hacer una revisión detallada del proyecto carpeta por carpeta:
+
+Ran tool
+Voy a analizar cada módulo principal y su estado:
+
+1. **Módulo de WhatsApp** ✅ (Completado)
+   - Implementación de Evolution API y Waba SMS
+   - Manejo de mensajes (texto, imagen, documento, audio, ubicación)
+   - Webhooks configurados
+   - Sistema de instancias por chatbot
+   - Gestión de estados y QR
+   - Falta:
+     - Implementar pruebas unitarias
+     - Documentación detallada de endpoints
+
+2. **Módulo de Chat** 🔄 (Parcialmente completado)
+   - Entidades básicas creadas
+   - Manejo de sesiones
+   - Historial de chat
+   - Falta:
+     - Implementar sistema de plantillas de mensajes
+     - Sistema de respuestas automáticas
+     - Integración con más proveedores de IA
+
+3. **Módulo de AI** 🔄 (Parcialmente completado)
+   - Integración con OpenAI
+   - Procesamiento de texto
+   - Falta:
+     - Implementar más modelos de IA
+     - Sistema de entrenamiento personalizado
+     - Manejo de contexto mejorado
+
+4. **Módulo de Admin** ✅ (Completado)
+   - CRUD de chatbots
+   - Gestión de configuraciones
+   - Panel de control
+   - Gestión de usuarios
+   - Falta:
+     - Métricas y analytics
+     - Sistema de reportes avanzados
+
+5. **Módulo de Auth** ✅ (Completado)
+   - JWT implementado
+   - Guards configurados
+   - Estrategias de autenticación
+   - Roles y permisos
+
+6. **Módulo de Media** 🔄 (Parcialmente completado)
+   - Manejo básico de archivos
+   - Falta:
+     - Optimización de imágenes
+     - Compresión de archivos
+     - Validación de tipos MIME
+     - Almacenamiento en la nube
+
+7. **Módulo de Valery** ✅ (Completado)
+   - Integración con API externa
+   - Sincronización de datos
+   - Manejo de errores
+
+8. **Módulo de Notificaciones** ❌ (Pendiente)
+   - Falta implementar completamente:
+     - Sistema de notificaciones push
+     - Emails transaccionales
+     - Alertas del sistema
+
+9. **Módulo de Reportes** ❌ (Pendiente)
+   - Falta implementar:
+     - Generación de reportes PDF
+     - Exportación de datos
+     - Estadísticas y métricas
+
+10. **Módulo de Base de Datos** ✅ (Completado)
+    - Configuración TypeORM
+    - Migraciones
+    - Conexiones múltiples
+    - Entidades principales
+
+11. **Configuración General** ✅ (Completado)
+    - Variables de entorno
+    - Configuración por ambiente
+    - Logging configurado
+    - Swagger implementado
+
+12. **Módulos Adicionales** ❌ (Pendientes)
+    - Payments: Sistema de pagos y facturación
+    - Orders: Gestión de órdenes
+    - Products: Catálogo de productos
+    - Carts: Carritos de compra
+    - Promotions: Sistema de promociones
+
+Tareas Pendientes Generales:
+1. **Testing** ❌
+   - Implementar pruebas unitarias
+   - Pruebas de integración
+   - Pruebas end-to-end
+   - Cobertura de código
+
+2. **Documentación** 🔄
+   - Mejorar documentación de API
+   - Documentación técnica
+   - Guías de usuario
+   - Ejemplos de uso
+
+3. **DevOps** ❌
+   - Configurar CI/CD
+   - Docker compose para desarrollo
+   - Kubernetes para producción
+   - Monitoreo y alertas
+
+4. **Seguridad** 🔄
+   - Auditoría de seguridad
+   - Rate limiting
+   - CORS configuración
+   - Validación de datos
+
+5. **Optimización** ❌
+   - Caché
+   - Optimización de consultas
+   - Manejo de carga
+   - Escalabilidad
+
+6. **UX/UI** ❌
+   - Panel de administración
+   - Interfaz de usuario
+   - Diseño responsive
+   - Temas y personalización
+
+Prioridades Sugeridas:
+1. Completar pruebas unitarias para módulos existentes
+2. Implementar sistema de notificaciones
+3. Mejorar documentación técnica
+4. Configurar CI/CD
+5. Implementar módulos pendientes por orden de importancia:
+   - Payments
+   - Orders
+   - Products
+   - Promotions
+
+¿Te gustaría que profundice en algún módulo específico o que detalle más alguna de las áreas mencionadas?

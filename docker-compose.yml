@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - USERS_DB_HOST=users_db
+      - USERS_DB_PORT=5432
+      - USERS_DB_USERNAME=postgres
+      - USERS_DB_PASSWORD=postgres
+      - USERS_DB_DATABASE=users_db
+      - ADMIN_DB_HOST=admin_db
+      - ADMIN_DB_PORT=5432
+      - ADMIN_DB_USERNAME=postgres
+      - ADMIN_DB_PASSWORD=postgres
+      - ADMIN_DB_DATABASE=chatbot_admin
+    depends_on:
+      - users_db
+      - admin_db
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  users_db:
+    image: postgres:14-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_db
+    volumes:
+      - users_postgres_data:/var/lib/postgresql/data
+
+  admin_db:
+    image: postgres:14-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=chatbot_admin
+    volumes:
+      - admin_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  users_postgres_data:
+  admin_postgres_data: 

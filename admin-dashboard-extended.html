@@ -1,0 +1,806 @@
+<!-- Extensión del Panel de Administración -->
+<!-- Esta sección contiene las vistas adicionales para el dashboard -->
+
+<!-- Carritos Abandonados View -->
+<div x-show="currentView === 'abandoned-carts'" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Carritos Abandonados</h3>
+        <div class="flex space-x-3">
+            <button @click="sendRecoveryMessageAll()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <i class="fas fa-paper-plane mr-2"></i>Enviar Recordatorios
+            </button>
+            <button @click="loadAbandonedCarts()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                <i class="fas fa-sync-alt mr-2"></i>Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-shopping-cart text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Abandonados</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="abandonedCarts.length"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <i class="fas fa-dollar-sign text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Valor Potencial</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="'$' + abandonedCartsValue.toFixed(2)"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-percentage text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Tasa de Recuperación</p>
+                    <p class="text-2xl font-bold text-gray-900">15.3%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Abandoned Carts Table -->
+    <div class="bg-white rounded-lg shadow-sm border">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-medium text-gray-900">Lista de Carritos Abandonados</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Actividad</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="cart in abandonedCarts" :key="cart.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="cart.customerPhone"></div>
+                                <div class="text-sm text-gray-500" x-text="cart.customerName || 'Cliente sin nombre'"></div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900" x-text="cart.itemCount + ' productos'"></div>
+                                <div class="text-sm text-gray-500" x-text="cart.products.slice(0, 2).map(p => p.name).join(', ') + (cart.products.length > 2 ? '...' : '')"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900" x-text="'$' + cart.total.toFixed(2)"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900" x-text="formatDate(cart.lastActivity)"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <button @click="sendRecoveryMessage(cart.id)" class="text-green-600 hover:text-green-900">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    <button @click="viewCartDetails(cart)" class="text-blue-600 hover:text-blue-900">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button @click="deleteCart(cart.id)" class="text-red-600 hover:text-red-900">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Descuentos y Ofertas View -->
+<div x-show="currentView === 'discounts'" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Descuentos y Ofertas</h3>
+        <button @click="showNewDiscountModal = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>Nueva Oferta
+        </button>
+    </div>
+
+    <!-- Discount Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <i class="fas fa-tags text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Ofertas Activas</p>
+                    <p class="text-2xl font-bold text-gray-900" x-text="activeDiscounts.length"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Uso Hoy</p>
+                    <p class="text-2xl font-bold text-gray-900">42</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-percentage text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Ahorro Total</p>
+                    <p class="text-2xl font-bold text-gray-900">$1,234</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <div class="flex items-center">
+                <div class="p-3 bg-red-100 rounded-lg">
+                    <i class="fas fa-fire text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Oferta del Día</p>
+                    <p class="text-sm font-bold text-gray-900">20% OFF</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Management -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <template x-for="discount in activeDiscounts" :key="discount.id">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900" x-text="discount.name"></h4>
+                        <p class="text-sm text-gray-500" x-text="discount.description"></p>
+                    </div>
+                    <span :class="discount.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" 
+                          class="px-2 py-1 text-xs rounded-full">
+                        <span x-text="discount.isActive ? 'Activo' : 'Inactivo'"></span>
+                    </span>
+                </div>
+
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Tipo:</span>
+                        <span class="text-sm font-medium" x-text="discount.type"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Descuento:</span>
+                        <span class="text-sm font-medium" x-text="discount.discountValue"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Usado:</span>
+                        <span class="text-sm font-medium" x-text="discount.usageCount + ' veces'"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Vigencia:</span>
+                        <span class="text-sm font-medium" x-text="formatDate(discount.endDate)"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2">
+                    <button @click="editDiscount(discount)" class="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button @click="toggleDiscount(discount.id)" 
+                            :class="discount.isActive ? 'text-yellow-600 hover:bg-yellow-50' : 'text-green-600 hover:bg-green-50'"
+                            class="px-3 py-1 rounded">
+                        <i :class="discount.isActive ? 'fas fa-pause' : 'fas fa-play'"></i>
+                    </button>
+                    <button @click="deleteDiscount(discount.id)" class="px-3 py-1 text-red-600 hover:bg-red-50 rounded">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+<!-- Notificaciones View -->
+<div x-show="currentView === 'notifications'" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Centro de Notificaciones</h3>
+        <button @click="showNotificationModal = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <i class="fas fa-plus mr-2"></i>Nueva Notificación
+        </button>
+    </div>
+
+    <!-- Notification Types -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Notificaciones Automáticas</h4>
+            <div class="space-y-3">
+                <label class="flex items-center">
+                    <input type="checkbox" x-model="notificationSettings.orderUpdates" class="mr-2">
+                    <span class="text-sm">Actualizaciones de pedidos</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" x-model="notificationSettings.cartReminders" class="mr-2">
+                    <span class="text-sm">Recordatorios de carrito</span>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" x-model="notificationSettings.promotions" class="mr-2">
+                    <span class="text-sm">Ofertas y promociones</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Estadísticas</h4>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Enviadas hoy:</span>
+                    <span class="text-sm font-medium">127</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Leídas:</span>
+                    <span class="text-sm font-medium">89%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Respondidas:</span>
+                    <span class="text-sm font-medium">32%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Envío Masivo</h4>
+            <div class="space-y-3">
+                <button @click="sendBulkPromotion()" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Enviar Promoción
+                </button>
+                <button @click="sendBulkReminder()" class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
+                    Recordatorio General
+                </button>
+                <button @click="sendBulkUpdate()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Actualización de Servicio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="bg-white rounded-lg shadow-sm border">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-medium text-gray-900">Notificaciones Recientes</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+            <template x-for="notification in recentNotifications" :key="notification.id">
+                <div class="p-6 hover:bg-gray-50">
+                    <div class="flex items-start space-x-3">
+                        <div :class="getNotificationIcon(notification.type)" class="p-2 rounded-lg">
+                            <i :class="notification.icon" class="text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-900" x-text="notification.title"></h4>
+                                    <p class="text-sm text-gray-600" x-text="notification.message"></p>
+                                </div>
+                                <span class="text-xs text-gray-500" x-text="notification.time"></span>
+                            </div>
+                            <div class="mt-2 flex items-center space-x-4">
+                                <span class="text-xs text-gray-500">
+                                    Enviado a <span x-text="notification.recipients"></span> usuarios
+                                </span>
+                                <span :class="notification.status === 'sent' ? 'text-green-600' : 'text-yellow-600'" 
+                                      class="text-xs">
+                                    <span x-text="notification.status === 'sent' ? 'Enviado' : 'Pendiente'"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<!-- Reportes View -->
+<div x-show="currentView === 'reports'" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Centro de Reportes</h3>
+        <div class="flex space-x-3">
+            <select x-model="reportDateRange" class="px-4 py-2 border rounded-lg">
+                <option value="today">Hoy</option>
+                <option value="week">Esta Semana</option>
+                <option value="month">Este Mes</option>
+                <option value="quarter">Trimestre</option>
+                <option value="year">Este Año</option>
+            </select>
+            <button @click="generateReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-chart-bar mr-2"></i>Generar
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Sales Report -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Reporte de Ventas</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Total de Ventas:</span>
+                    <span class="text-sm font-bold text-green-600">$12,450</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Número de Pedidos:</span>
+                    <span class="text-sm font-medium">89</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Ticket Promedio:</span>
+                    <span class="text-sm font-medium">$139.89</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Crecimiento:</span>
+                    <span class="text-sm font-medium text-green-600">+12.5%</span>
+                </div>
+            </div>
+            <button @click="downloadReport('sales')" class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-download mr-2"></i>Descargar PDF
+            </button>
+        </div>
+
+        <!-- Customer Report -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Reporte de Clientes</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Clientes Activos:</span>
+                    <span class="text-sm font-bold text-blue-600">234</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Nuevos Clientes:</span>
+                    <span class="text-sm font-medium">45</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Retención:</span>
+                    <span class="text-sm font-medium">78.2%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Satisfacción:</span>
+                    <span class="text-sm font-medium text-green-600">4.7/5</span>
+                </div>
+            </div>
+            <button @click="downloadReport('customers')" class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-download mr-2"></i>Descargar PDF
+            </button>
+        </div>
+
+        <!-- Product Report -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Productos Más Vendidos</h4>
+            <div class="space-y-3">
+                <template x-for="product in topProducts" :key="product.id">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-sm font-medium" x-text="product.name"></span>
+                            <p class="text-xs text-gray-500" x-text="product.category"></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-bold" x-text="product.sales"></span>
+                            <p class="text-xs text-gray-500">vendidos</p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <button @click="downloadReport('products')" class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-download mr-2"></i>Descargar PDF
+            </button>
+        </div>
+
+        <!-- Chatbot Performance -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Rendimiento del Chatbot</h4>
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Consultas Resueltas:</span>
+                    <span class="text-sm font-bold text-green-600">92.3%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Tiempo Promedio:</span>
+                    <span class="text-sm font-medium">1.2 min</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Conversiones:</span>
+                    <span class="text-sm font-medium">34.7%</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-sm text-gray-600">Satisfacción:</span>
+                    <span class="text-sm font-medium text-green-600">4.8/5</span>
+                </div>
+            </div>
+            <button @click="downloadReport('chatbot')" class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-download mr-2"></i>Descargar PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Sesiones Activas View -->
+<div x-show="currentView === 'sessions'" class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h3 class="text-lg font-medium text-gray-900">Sesiones Activas</h3>
+        <div class="flex items-center space-x-3">
+            <span class="text-sm text-gray-600">Auto-actualización:</span>
+            <label class="switch">
+                <input type="checkbox" x-model="autoRefresh">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Active Sessions Table -->
+    <div class="bg-white rounded-lg shadow-sm border">
+        <div class="p-6 border-b">
+            <h3 class="text-lg font-medium text-gray-900">Usuarios Conectados</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Mensaje</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duración</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carrito</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <template x-for="session in activeSessions" :key="session.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900" x-text="session.phone"></div>
+                                        <div class="text-sm text-gray-500" x-text="session.name || 'Sin nombre'"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span :class="getSessionStatusClass(session.status)" 
+                                      class="px-2 py-1 text-xs rounded-full" x-text="session.status"></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900" x-text="session.lastMessage.substring(0, 50) + '...'"></div>
+                                <div class="text-sm text-gray-500" x-text="formatTime(session.lastMessageTime)"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="session.duration"></td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900" x-text="session.cartItems + ' items'"></div>
+                                <div class="text-sm text-gray-500" x-text="'$' + session.cartValue.toFixed(2)"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <button @click="viewSession(session)" class="text-blue-600 hover:text-blue-900">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button @click="sendMessage(session)" class="text-green-600 hover:text-green-900">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
+                                    <button @click="endSession(session.id)" class="text-red-600 hover:text-red-900">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Toggle Switch Styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #3B82F6;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+</style>
+
+<!-- Additional JavaScript Functions -->
+<script>
+// Extensión de funciones para el dashboard
+function extendAdminDashboard() {
+    return {
+        // Additional data
+        abandonedCarts: [],
+        abandonedCartsValue: 0,
+        activeDiscounts: [],
+        notificationSettings: {
+            orderUpdates: true,
+            cartReminders: true,
+            promotions: false
+        },
+        recentNotifications: [],
+        reportDateRange: 'week',
+        topProducts: [],
+        activeSessions: [],
+        autoRefresh: true,
+        showNewDiscountModal: false,
+        showNotificationModal: false,
+
+        // Additional methods
+        async loadAbandonedCarts() {
+            try {
+                const response = await fetch('/api/admin/carts/abandoned');
+                const data = await response.json();
+                this.abandonedCarts = data;
+                this.abandonedCartsValue = data.reduce((sum, cart) => sum + cart.total, 0);
+            } catch (error) {
+                console.error('Error loading abandoned carts:', error);
+            }
+        },
+
+        async sendRecoveryMessage(cartId) {
+            try {
+                const response = await fetch(`/api/admin/carts/send-recovery/${cartId}`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    this.showNotification('Mensaje de recuperación enviado', 'success');
+                }
+            } catch (error) {
+                this.showNotification('Error enviando mensaje', 'error');
+            }
+        },
+
+        async sendRecoveryMessageAll() {
+            if (confirm('¿Enviar recordatorio a todos los carritos abandonados?')) {
+                for (const cart of this.abandonedCarts) {
+                    await this.sendRecoveryMessage(cart.id);
+                }
+                this.showNotification('Recordatorios enviados exitosamente', 'success');
+            }
+        },
+
+        formatDate(date) {
+            return new Date(date).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        formatTime(time) {
+            return new Date(time).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        getNotificationIcon(type) {
+            const icons = {
+                'order': 'bg-blue-500',
+                'promotion': 'bg-green-500',
+                'cart': 'bg-yellow-500',
+                'system': 'bg-purple-500'
+            };
+            return icons[type] || 'bg-gray-500';
+        },
+
+        getSessionStatusClass(status) {
+            const classes = {
+                'active': 'bg-green-100 text-green-800',
+                'waiting': 'bg-yellow-100 text-yellow-800',
+                'ordering': 'bg-blue-100 text-blue-800',
+                'payment': 'bg-purple-100 text-purple-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        },
+
+        async generateReport() {
+            this.isLoading = true;
+            try {
+                const response = await fetch(`/api/admin/reports?range=${this.reportDateRange}`);
+                const data = await response.json();
+                this.showNotification('Reporte generado exitosamente', 'success');
+            } catch (error) {
+                this.showNotification('Error generando reporte', 'error');
+            }
+            this.isLoading = false;
+        },
+
+        async downloadReport(type) {
+            try {
+                const response = await fetch(`/api/admin/reports/${type}/download?range=${this.reportDateRange}`);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reporte-${type}-${new Date().toISOString().split('T')[0]}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                this.showNotification('Error descargando reporte', 'error');
+            }
+        },
+
+        // Initialize extended data
+        initExtended() {
+            this.loadAbandonedCarts();
+            this.loadActiveDiscounts();
+            this.loadRecentNotifications();
+            this.loadTopProducts();
+            this.loadActiveSessions();
+
+            // Auto refresh for sessions
+            if (this.autoRefresh) {
+                setInterval(() => {
+                    if (this.currentView === 'sessions') {
+                        this.loadActiveSessions();
+                    }
+                }, 10000);
+            }
+        },
+
+        async loadActiveDiscounts() {
+            // Simulate loading discounts
+            this.activeDiscounts = [
+                {
+                    id: 1,
+                    name: 'Descuento de Bienvenida',
+                    description: '20% de descuento para nuevos clientes',
+                    type: 'Porcentaje',
+                    discountValue: '20%',
+                    usageCount: 45,
+                    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    isActive: true
+                },
+                {
+                    id: 2,
+                    name: 'Envío Gratis',
+                    description: 'Envío gratuito en compras mayores a $50',
+                    type: 'Envío Gratis',
+                    discountValue: 'Gratis',
+                    usageCount: 128,
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                    isActive: true
+                }
+            ];
+        },
+
+        async loadRecentNotifications() {
+            this.recentNotifications = [
+                {
+                    id: 1,
+                    type: 'promotion',
+                    icon: 'fas fa-tag',
+                    title: 'Promoción Enviada',
+                    message: 'Descuento del 20% enviado a clientes activos',
+                    time: 'hace 2 horas',
+                    recipients: 156,
+                    status: 'sent'
+                },
+                {
+                    id: 2,
+                    type: 'cart',
+                    icon: 'fas fa-shopping-cart',
+                    title: 'Recordatorio de Carrito',
+                    message: 'Recordatorio enviado a carritos abandonados',
+                    time: 'hace 4 horas',
+                    recipients: 23,
+                    status: 'sent'
+                }
+            ];
+        },
+
+        async loadTopProducts() {
+            this.topProducts = [
+                { id: 1, name: 'Producto A', category: 'Categoría 1', sales: 45 },
+                { id: 2, name: 'Producto B', category: 'Categoría 2', sales: 38 },
+                { id: 3, name: 'Producto C', category: 'Categoría 1', sales: 29 },
+                { id: 4, name: 'Producto D', category: 'Categoría 3', sales: 22 }
+            ];
+        },
+
+        async loadActiveSessions() {
+            this.activeSessions = [
+                {
+                    id: 1,
+                    phone: '+58414123456',
+                    name: 'Juan Pérez',
+                    status: 'active',
+                    lastMessage: 'Quiero ver el menú de productos disponibles',
+                    lastMessageTime: new Date(Date.now() - 2 * 60 * 1000),
+                    duration: '15 min',
+                    cartItems: 3,
+                    cartValue: 45.99
+                },
+                {
+                    id: 2,
+                    phone: '+58424987654',
+                    name: 'María González',
+                    status: 'ordering',
+                    lastMessage: 'Quiero agregar 2 kilos de arroz al carrito',
+                    lastMessageTime: new Date(Date.now() - 5 * 60 * 1000),
+                    duration: '8 min',
+                    cartItems: 1,
+                    cartValue: 12.50
+                }
+            ];
+        }
+    };
+}
+
+// Merge extended functions with main dashboard
+Object.assign(window.adminDashboard.prototype, extendAdminDashboard());
+</script> 

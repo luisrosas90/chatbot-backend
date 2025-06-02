@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - GómezMarket Chatbot</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-50">
+    <div x-data="adminDashboard()" class="min-h-screen">
+        <!-- Sidebar -->
+        <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out" 
+             :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+            
+            <!-- Logo -->
+            <div class="flex items-center justify-center h-16 px-4 bg-blue-600 text-white">
+                <i class="fas fa-robot text-2xl mr-2"></i>
+                <h1 class="text-xl font-bold">GómezMarket</h1>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="mt-8">
+                <div class="px-4 space-y-2">
+                    <!-- Dashboard -->
+                    <a @click="currentView = 'dashboard'" 
+                       :class="currentView === 'dashboard' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        Dashboard
+                    </a>
+
+                    <!-- Configuración del Chatbot -->
+                    <a @click="currentView = 'chatbot-config'" 
+                       :class="currentView === 'chatbot-config' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-cog mr-3"></i>
+                        Configuración del Bot
+                    </a>
+
+                    <!-- Plantillas de Mensajes -->
+                    <a @click="currentView = 'message-templates'" 
+                       :class="currentView === 'message-templates' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-comments mr-3"></i>
+                        Plantillas de Mensajes
+                    </a>
+
+                    <!-- Carritos Abandonados -->
+                    <a @click="currentView = 'abandoned-carts'" 
+                       :class="currentView === 'abandoned-carts' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-shopping-cart mr-3"></i>
+                        Carritos Abandonados
+                        <span x-show="abandonedCartsCount > 0" x-text="abandonedCartsCount" 
+                              class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full"></span>
+                    </a>
+
+                    <!-- Descuentos y Ofertas -->
+                    <a @click="currentView = 'discounts'" 
+                       :class="currentView === 'discounts' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-tags mr-3"></i>
+                        Descuentos y Ofertas
+                    </a>
+
+                    <!-- Notificaciones -->
+                    <a @click="currentView = 'notifications'" 
+                       :class="currentView === 'notifications' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-bell mr-3"></i>
+                        Notificaciones
+                    </a>
+
+                    <!-- Reportes -->
+                    <a @click="currentView = 'reports'" 
+                       :class="currentView === 'reports' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-chart-bar mr-3"></i>
+                        Reportes
+                    </a>
+
+                    <!-- Sesiones Activas -->
+                    <a @click="currentView = 'sessions'" 
+                       :class="currentView === 'sessions' ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                       class="flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer">
+                        <i class="fas fa-users mr-3"></i>
+                        Sesiones Activas
+                    </a>
+                </div>
+            </nav>
+
+            <!-- User Info -->
+            <div class="absolute bottom-0 w-full p-4 border-t">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white">
+                        <i class="fas fa-user text-sm"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-gray-700">Administrador</p>
+                        <p class="text-xs text-gray-500">admin@gomezmarket.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:ml-64 flex flex-col min-h-screen">
+            <!-- Top Bar -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-4">
+                        <div class="flex items-center">
+                            <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500">
+                                <i class="fas fa-bars text-xl"></i>
+                            </button>
+                            <h2 class="text-2xl font-bold text-gray-900 ml-2" x-text="getViewTitle()"></h2>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <!-- Status Indicator -->
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                <span class="text-sm text-gray-600">Chatbot Activo</span>
+                            </div>
+                            <!-- Refresh Button -->
+                            <button @click="refreshData()" class="p-2 text-gray-400 hover:text-gray-500">
+                                <i class="fas fa-sync-alt" :class="{ 'animate-spin': isLoading }"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main class="flex-1 p-6">
+                <!-- Dashboard View -->
+                <div x-show="currentView === 'dashboard'" class="space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 rounded-lg">
+                                    <i class="fas fa-comments text-blue-600 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Sesiones Activas</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.activeSessions"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-green-100 rounded-lg">
+                                    <i class="fas fa-shopping-bag text-green-600 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Pedidos Hoy</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.ordersToday"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-yellow-100 rounded-lg">
+                                    <i class="fas fa-shopping-cart text-yellow-600 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Carritos Abandonados</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.abandonedCarts"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-purple-100 rounded-lg">
+                                    <i class="fas fa-percentage text-purple-600 text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-600">Tasa de Conversión</p>
+                                    <p class="text-2xl font-bold text-gray-900" x-text="stats.conversionRate + '%'"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Sales Chart -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Ventas por Día</h3>
+                            <canvas id="salesChart" width="400" height="200"></canvas>
+                        </div>
+
+                        <!-- Popular Searches -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Búsquedas Populares</h3>
+                            <div class="space-y-3">
+                                <template x-for="search in popularSearches" :key="search.term">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-gray-700" x-text="search.term"></span>
+                                        <span class="text-sm font-medium text-blue-600" x-text="search.count"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-lg shadow-sm border">
+                        <div class="p-6 border-b">
+                            <h3 class="text-lg font-medium text-gray-900">Actividad Reciente</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4">
+                                <template x-for="activity in recentActivity" :key="activity.id">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-900" x-text="activity.message"></p>
+                                            <p class="text-xs text-gray-500" x-text="activity.time"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración del Chatbot View -->
+                <div x-show="currentView === 'chatbot-config'" class="space-y-6">
+                    <div class="bg-white rounded-lg shadow-sm border">
+                        <div class="p-6 border-b">
+                            <h3 class="text-lg font-medium text-gray-900">Configuración General</h3>
+                        </div>
+                        <div class="p-6">
+                            <form @submit.prevent="saveChatbotConfig()" class="space-y-6">
+                                <!-- Formato de Respuestas -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Formato de Respuestas</label>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center">
+                                            <input type="radio" x-model="config.responseFormat" value="formal" class="mr-2">
+                                            <span class="text-sm">Formal - "Estimado cliente, gracias por contactarnos..."</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="radio" x-model="config.responseFormat" value="friendly" class="mr-2">
+                                            <span class="text-sm">Amigable - "¡Hola! ¿Cómo podemos ayudarte hoy?"</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="radio" x-model="config.responseFormat" value="casual" class="mr-2">
+                                            <span class="text-sm">Casual - "¡Hey! ¿Qué tal? ¿En qué te puedo ayudar?"</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Personalidad del Bot -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Personalidad del Bot</label>
+                                    <select x-model="config.personality" class="w-full p-3 border rounded-lg">
+                                        <option value="professional">Profesional</option>
+                                        <option value="helpful">Servicial</option>
+                                        <option value="enthusiastic">Entusiasta</option>
+                                        <option value="patient">Paciente</option>
+                                    </select>
+                                </div>
+
+                                <!-- Tiempo de Respuesta -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de Respuesta (segundos)</label>
+                                    <input type="range" x-model="config.responseDelay" min="0" max="5" step="0.5" class="w-full">
+                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>Inmediato</span>
+                                        <span x-text="config.responseDelay + 's'"></span>
+                                        <span>5s</span>
+                                    </div>
+                                </div>
+
+                                <!-- Emojis -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Uso de Emojis</label>
+                                    <div class="flex items-center space-x-4">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.useEmojis" class="mr-2">
+                                            Usar emojis en respuestas
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.useReactionEmojis" class="mr-2">
+                                            Reacciones con emojis
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Límites -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Máximo productos por carrito</label>
+                                        <input type="number" x-model="config.maxCartItems" min="1" max="100" class="w-full p-3 border rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Duración máxima de sesión (horas)</label>
+                                        <input type="number" x-model="config.maxSessionDuration" min="1" max="24" class="w-full p-3 border rounded-lg">
+                                    </div>
+                                </div>
+
+                                <!-- Botones -->
+                                <div class="flex justify-end space-x-3">
+                                    <button type="button" @click="resetToDefaults()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                        Restaurar Defaults
+                                    </button>
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        Guardar Configuración
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Configuración Avanzada -->
+                    <div class="bg-white rounded-lg shadow-sm border">
+                        <div class="p-6 border-b">
+                            <h3 class="text-lg font-medium text-gray-900">Configuración Avanzada</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-6">
+                                <!-- IA y Procesamiento -->
+                                <div>
+                                    <h4 class="text-md font-medium text-gray-900 mb-3">Inteligencia Artificial</h4>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.enableAI" class="mr-2">
+                                            Usar IA para respuestas automáticas
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.enableSentimentAnalysis" class="mr-2">
+                                            Análisis de sentimientos
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.enableSpellCheck" class="mr-2">
+                                            Corrección automática de ortografía
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Notificaciones Automáticas -->
+                                <div>
+                                    <h4 class="text-md font-medium text-gray-900 mb-3">Notificaciones Automáticas</h4>
+                                    <div class="space-y-3">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.autoCartReminders" class="mr-2">
+                                            Recordatorios de carrito abandonado (24h)
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.autoOfferNotifications" class="mr-2">
+                                            Notificar ofertas del día automáticamente
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" x-model="config.autoOrderUpdates" class="mr-2">
+                                            Actualizaciones automáticas de pedidos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plantillas de Mensajes View -->
+                <div x-show="currentView === 'message-templates'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Plantillas de Mensajes</h3>
+                        <button @click="showNewTemplateModal = true" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>Nueva Plantilla
+                        </button>
+                    </div>
+
+                    <!-- Templates Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <template x-for="template in messageTemplates" :key="template.id">
+                            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 class="text-md font-medium text-gray-900" x-text="template.name"></h4>
+                                        <p class="text-sm text-gray-500" x-text="template.type"></p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button @click="editTemplate(template)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button @click="deleteTemplate(template.id)" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded text-sm" x-text="template.content"></div>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="text-xs text-gray-500">Usado <span x-text="template.usageCount"></span> veces</span>
+                                    <span :class="template.isActive ? 'text-green-600' : 'text-gray-400'" class="text-xs">
+                                        <i :class="template.isActive ? 'fas fa-check-circle' : 'fas fa-pause-circle'"></i>
+                                        <span x-text="template.isActive ? 'Activo' : 'Inactivo'"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Resto de las vistas se continuarán en la siguiente parte... -->
+                
+            </main>
+        </div>
+
+        <!-- Modals y componentes adicionales -->
+        <!-- Modal para Nueva Plantilla -->
+        <div x-show="showNewTemplateModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-black opacity-50" @click="showNewTemplateModal = false"></div>
+                <div class="bg-white rounded-lg p-6 w-full max-w-md relative z-10">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Nueva Plantilla de Mensaje</h3>
+                    <form @submit.prevent="saveNewTemplate()" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                            <input type="text" x-model="newTemplate.name" class="w-full p-3 border rounded-lg" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                            <select x-model="newTemplate.type" class="w-full p-3 border rounded-lg" required>
+                                <option value="greeting">Saludo</option>
+                                <option value="help">Ayuda</option>
+                                <option value="product_info">Información de Producto</option>
+                                <option value="payment">Pago</option>
+                                <option value="farewell">Despedida</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
+                            <textarea x-model="newTemplate.content" class="w-full p-3 border rounded-lg" rows="4" required></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" @click="showNewTemplateModal = false" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                sidebarOpen: false,
+                currentView: 'dashboard',
+                isLoading: false,
+                showNewTemplateModal: false,
+                
+                // Data
+                stats: {
+                    activeSessions: 0,
+                    ordersToday: 0,
+                    abandonedCarts: 0,
+                    conversionRate: 0
+                },
+                
+                popularSearches: [],
+                recentActivity: [],
+                messageTemplates: [],
+                abandonedCartsCount: 0,
+                
+                // Configuration
+                config: {
+                    responseFormat: 'friendly',
+                    personality: 'helpful',
+                    responseDelay: 1,
+                    useEmojis: true,
+                    useReactionEmojis: false,
+                    maxCartItems: 50,
+                    maxSessionDuration: 2,
+                    enableAI: true,
+                    enableSentimentAnalysis: false,
+                    enableSpellCheck: true,
+                    autoCartReminders: true,
+                    autoOfferNotifications: true,
+                    autoOrderUpdates: true
+                },
+                
+                newTemplate: {
+                    name: '',
+                    type: '',
+                    content: ''
+                },
+                
+                init() {
+                    this.loadDashboardData();
+                    this.loadChatbotConfig();
+                    this.loadMessageTemplates();
+                    
+                    // Auto refresh every 30 seconds
+                    setInterval(() => {
+                        this.refreshData();
+                    }, 30000);
+                },
+                
+                getViewTitle() {
+                    const titles = {
+                        'dashboard': 'Dashboard',
+                        'chatbot-config': 'Configuración del Chatbot',
+                        'message-templates': 'Plantillas de Mensajes',
+                        'abandoned-carts': 'Carritos Abandonados',
+                        'discounts': 'Descuentos y Ofertas',
+                        'notifications': 'Notificaciones',
+                        'reports': 'Reportes',
+                        'sessions': 'Sesiones Activas'
+                    };
+                    return titles[this.currentView] || 'Panel de Administración';
+                },
+                
+                async loadDashboardData() {
+                    try {
+                        const response = await fetch('/api/admin/dashboard');
+                        const data = await response.json();
+                        
+                        this.stats = {
+                            activeSessions: data.chatbot?.activeSessions || 0,
+                            ordersToday: data.orders?.ordersToday || 0,
+                            abandonedCarts: data.carts?.totalAbandoned || 0,
+                            conversionRate: data.chatbot?.conversionRate || 0
+                        };
+                        
+                        this.abandonedCartsCount = this.stats.abandonedCarts;
+                        this.popularSearches = data.chatbot?.topSearches || [];
+                        
+                        // Simulate recent activity
+                        this.recentActivity = [
+                            { id: 1, message: 'Nuevo pedido creado por +58414123456', time: 'hace 2 minutos' },
+                            { id: 2, message: 'Carrito abandonado recuperado', time: 'hace 5 minutos' },
+                            { id: 3, message: 'Nueva sesión iniciada', time: 'hace 10 minutos' }
+                        ];
+                        
+                    } catch (error) {
+                        console.error('Error loading dashboard data:', error);
+                    }
+                },
+                
+                async loadChatbotConfig() {
+                    try {
+                        const response = await fetch('/api/admin/config/chatbot');
+                        const data = await response.json();
+                        this.config = { ...this.config, ...data };
+                    } catch (error) {
+                        console.error('Error loading config:', error);
+                    }
+                },
+                
+                async loadMessageTemplates() {
+                    // Simulate loading templates
+                    this.messageTemplates = [
+                        {
+                            id: 1,
+                            name: 'Saludo de Bienvenida',
+                            type: 'greeting',
+                            content: '¡Hola! 👋 Bienvenido a GómezMarket. ¿En qué puedo ayudarte hoy?',
+                            isActive: true,
+                            usageCount: 245
+                        },
+                        {
+                            id: 2,
+                            name: 'Ayuda General',
+                            type: 'help',
+                            content: 'Puedo ayudarte con: 🛒 Buscar productos 📦 Ver tu carrito 💳 Realizar pedidos ❓ Responder preguntas',
+                            isActive: true,
+                            usageCount: 89
+                        }
+                    ];
+                },
+                
+                async saveChatbotConfig() {
+                    this.isLoading = true;
+                    try {
+                        const response = await fetch('/api/admin/config/chatbot', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.config)
+                        });
+                        
+                        if (response.ok) {
+                            this.showNotification('Configuración guardada exitosamente', 'success');
+                        }
+                    } catch (error) {
+                        this.showNotification('Error guardando configuración', 'error');
+                    }
+                    this.isLoading = false;
+                },
+                
+                resetToDefaults() {
+                    this.config = {
+                        responseFormat: 'friendly',
+                        personality: 'helpful',
+                        responseDelay: 1,
+                        useEmojis: true,
+                        useReactionEmojis: false,
+                        maxCartItems: 50,
+                        maxSessionDuration: 2,
+                        enableAI: true,
+                        enableSentimentAnalysis: false,
+                        enableSpellCheck: true,
+                        autoCartReminders: true,
+                        autoOfferNotifications: true,
+                        autoOrderUpdates: true
+                    };
+                },
+                
+                async saveNewTemplate() {
+                    if (!this.newTemplate.name || !this.newTemplate.content) return;
+                    
+                    // Simulate saving
+                    const newId = this.messageTemplates.length + 1;
+                    this.messageTemplates.push({
+                        id: newId,
+                        ...this.newTemplate,
+                        isActive: true,
+                        usageCount: 0
+                    });
+                    
+                    this.newTemplate = { name: '', type: '', content: '' };
+                    this.showNewTemplateModal = false;
+                    this.showNotification('Plantilla creada exitosamente', 'success');
+                },
+                
+                editTemplate(template) {
+                    // Implementation for editing template
+                    console.log('Editing template:', template);
+                },
+                
+                deleteTemplate(templateId) {
+                    if (confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) {
+                        this.messageTemplates = this.messageTemplates.filter(t => t.id !== templateId);
+                        this.showNotification('Plantilla eliminada', 'success');
+                    }
+                },
+                
+                async refreshData() {
+                    this.isLoading = true;
+                    await this.loadDashboardData();
+                    this.isLoading = false;
+                },
+                
+                showNotification(message, type = 'info') {
+                    // Simple notification system
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                        type === 'success' ? 'bg-green-500' : 
+                        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Initialize charts when dashboard is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const ctx = document.getElementById('salesChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                            datasets: [{
+                                label: 'Ventas ($)',
+                                data: [1200, 1900, 800, 2100, 1600, 900, 1400],
+                                borderColor: 'rgb(59, 130, 246)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html> 

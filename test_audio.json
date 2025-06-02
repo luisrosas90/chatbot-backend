@@ -1,0 +1,21 @@
+{
+  "data": {
+    "from": "584245325586@s.whatsapp.net",
+    "to": "04245600192",
+    "body": "Audio recibido",
+    "timestamp": "2025-06-01T19:30:00.000Z",
+    "type": "audio",
+    "instanceId": "04245600192",
+    "messageId": "3A8C3BF664D6241B9D2D",
+    "status": "DELIVERY_ACK",
+    "metadata": {
+      "audioUrl": "https://mmg.whatsapp.net/v/t62.7117-24/12161594_1753712175496391_2864631745572267198_n.enc?ccb=11-4&oh=01_Q5Aa1gHMIb199sy8HbykeoMCAZjFrs8DTXKOGv1glH3el81W7g&oe=68641E70&_nc_sid=5e03e0&mms3=true",
+      "mimetype": "audio/ogg; codecs=opus",
+      "fileLength": "3884",
+      "seconds": 1,
+      "ptt": true,
+      "mediaKey": "iqYlDlkXtMkdu7qQUrkmhX2YJf9fO0Qcg+CNUs9t9sw=",
+      "base64Audio": ""
+    }
+  }
+} 
