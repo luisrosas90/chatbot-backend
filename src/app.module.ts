@@ -93,32 +93,42 @@ import { ReportsModule } from './reports/reports.module';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forRootAsync({
-      name: 'externa',
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const externaDbConfig = configService.get('database.externa');
-        if (!externaDbConfig) {
-          throw new Error('No se encontró la configuración de database.externa');
-        }
-        return {
-          name: 'externa',
-          type: externaDbConfig.type,
-          host: externaDbConfig.host,
-          port: externaDbConfig.port,
-          username: externaDbConfig.username,
-          password: externaDbConfig.password,
-          database: externaDbConfig.database,
-          entities: [],
-          synchronize: false, // No sincronizar - solo lectura
-          retryAttempts: externaDbConfig.retryAttempts,
-          retryDelay: externaDbConfig.retryDelay,
-          ssl: externaDbConfig.ssl,
-          logging: configService.get('nodeEnv') === 'development',
-        };
-      },
-      inject: [ConfigService],
-    }),
+    // Base de datos externa (opcional)
+    ...(process.env.EXTERNAL_DB_HOST ? [
+      TypeOrmModule.forRootAsync({
+        name: 'externa',
+        imports: [ConfigModule],
+        useFactory: async (configService: ConfigService) => {
+          const externaDbConfig = configService.get('database.externa');
+          if (!externaDbConfig) {
+            console.warn('⚠️ Configuración de base de datos externa no encontrada - continuando sin conexión externa');
+            return null;
+          }
+          
+          try {
+            return {
+              name: 'externa',
+              type: externaDbConfig.type,
+              host: externaDbConfig.host,
+              port: externaDbConfig.port,
+              username: externaDbConfig.username,
+              password: externaDbConfig.password,
+              database: externaDbConfig.database,
+              entities: [],
+              synchronize: false, // No sincronizar - solo lectura
+              retryAttempts: 1, // Reducir reintentos para startup más rápido
+              retryDelay: 1000,
+              ssl: externaDbConfig.ssl,
+              logging: configService.get('nodeEnv') === 'development',
+            };
+          } catch (error) {
+            console.warn('⚠️ Error configurando base de datos externa:', error.message);
+            return null;
+          }
+        },
+        inject: [ConfigService],
+      })
+    ] : []),
     UsersModule,
     AuthModule,
     WhatsappModule,
@@ -127,7 +137,8 @@ import { ReportsModule } from './reports/reports.module';
     PaymentsModule,
     CartsModule,
     NotificationsModule,
-    ExternalDbModule,
+    // Solo incluir ExternalDbModule si la conexión está disponible
+    ...(process.env.EXTERNAL_DB_HOST ? [ExternalDbModule] : []),
     HealthModule,
     ChatModule,
     ValeryModule,
